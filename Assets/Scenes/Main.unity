@@ -326,7 +326,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 59305a2ce5bd92942a740abf484915b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resolution: 512
+  resolution: 16
   frequency: 512
   dimensions: 3
 --- !u!64 &2020091837
