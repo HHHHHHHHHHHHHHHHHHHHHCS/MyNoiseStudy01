@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using UnityEditorInternal;
 using UnityEngine;
 
+
 public class TextureCreator : MonoBehaviour
 {
     [Range(2, 512)] public int resolution = 256;
     public float frequency = 1f;
     [Range(1, 3)] public int dimensions = 3;
+    public NoiseMethodType type;
     private Texture2D texture;
 
     private void OnEnable()
@@ -19,9 +21,9 @@ public class TextureCreator : MonoBehaviour
             texture.wrapMode = TextureWrapMode.Clamp;
             texture.filterMode = FilterMode.Trilinear;
             texture.anisoLevel = 9;
+            GetComponent<MeshRenderer>().material.mainTexture = texture;
         }
 
-        GetComponent<MeshRenderer>().material.mainTexture = texture;
         FillTexture();
     }
 
@@ -37,9 +39,8 @@ public class TextureCreator : MonoBehaviour
         Vector3 point01 = transform.TransformPoint(new Vector3(-0.5f, 0.5f));
         Vector3 point11 = transform.TransformPoint(new Vector3(0.5f, 0.5f));
 
-        NoiseMethod method = Noise.valueMethods[dimensions - 1];
+        NoiseMethod method = Noise.methods[(int)type][dimensions - 1];
         float stepSize = 1f / resolution;
-        Random.InitState(42);
         for (int y = 0; y < resolution; y++)
         {
             Vector3 point0 = Vector3.Lerp(point00, point01, (y + 0.5f) * stepSize);
@@ -47,11 +48,14 @@ public class TextureCreator : MonoBehaviour
             for (int x = 0; x < resolution; x++)
             {
                 Vector3 point = Vector3.Lerp(point0, point1, (x + 0.5f) * stepSize);
-                texture.SetPixel(x, y, new Color(point.x, point.y, point.z));
-                texture.SetPixel(x, y, Color.white * method(point, frequency));
+                float sample = method(point, frequency);
+                if (type != NoiseMethodType.Value)
+                {
+                    sample = sample * 0.5f + 0.5f;
+                }
+                texture.SetPixel(x, y, Color.white * sample);
             }
         }
-
         texture.Apply();
     }
 
