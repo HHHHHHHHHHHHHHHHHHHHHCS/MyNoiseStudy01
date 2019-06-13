@@ -10,6 +10,8 @@ public class SurfaceCreator : MonoBehaviour
     public Vector3 offset;
     public Vector3 rotation;
 
+    [Range(0f, 1f)] public float strength = 1f;
+
     public float frequency = 1f;
 
     [Range(1, 8)] public int octaves = 1;
@@ -20,10 +22,15 @@ public class SurfaceCreator : MonoBehaviour
 
     [Range(1, 3)] public int dimensions = 3;
 
+    public bool coloringForStrength;
 
     public NoiseMethodType type;
 
     public Gradient coloring;
+
+    public bool damping;
+
+    public bool showNormals;
 
     private int currentResolution;
 
@@ -59,6 +66,7 @@ public class SurfaceCreator : MonoBehaviour
 
         NoiseMethod method = Noise.methods[(int) type][dimensions - 1];
         float stepSize = 1f / resolution;
+        float amplitude = damping ? strength / frequency : strength;
         for (int v = 0, y = 0; y <= resolution; y++)
         {
             Vector3 point0 = Vector3.Lerp(point00, point01, y * stepSize);
@@ -74,6 +82,17 @@ public class SurfaceCreator : MonoBehaviour
                 }
 
                 sample = type == NoiseMethodType.Value ? (sample - 0.5f) : (sample * 0.5f);
+                if (coloringForStrength)
+                {
+                    colors[v] = coloring.Evaluate(sample + 0.5f);
+                    sample *= amplitude;
+                }
+                else
+                {
+                    sample *= amplitude;
+                    colors[v] = coloring.Evaluate(sample + 0.5f);
+                }
+
                 vertices[v].y = sample;
                 colors[v] = coloring.Evaluate(sample + 0.5f);
             }
@@ -81,7 +100,8 @@ public class SurfaceCreator : MonoBehaviour
 
         mesh.vertices = vertices;
         mesh.colors = colors;
-        mesh.RecalculateNormals();
+        CalculateNormals();
+        mesh.normals = normals;
     }
 
     private void CreateGrid()
@@ -126,5 +146,85 @@ public class SurfaceCreator : MonoBehaviour
         mesh.normals = normals;
         mesh.uv = uv;
         mesh.triangles = triangles;
+    }
+
+    private void CalculateNormals()
+    {
+        for (int v = 0, z = 0; z <= resolution; z++)
+        {
+            for (int x = 0; x <= resolution; x++, v++)
+            {
+                normals[v] = new Vector3(-GetXDerivative(x, z), 1f, -GetZDerivative(x, z)).normalized;
+            }
+        }
+    }
+
+    private float GetXDerivative(int x, int z)
+    {
+        int rowOffset = z * (resolution + 1);
+        float left, right, scale;
+        if (x > 0)
+        {
+            left = vertices[rowOffset + x - 1].y;
+            if (x < resolution)
+            {
+                right = vertices[rowOffset + x + 1].y;
+                scale = 0.5f * resolution;
+            }
+            else
+            {
+                right = vertices[rowOffset + x].y;
+                scale = resolution;
+            }
+        }
+        else
+        {
+            left = vertices[rowOffset + x].y;
+            right = vertices[rowOffset + x + 1].y;
+            scale = resolution;
+        }
+
+        return (right - left) * scale;
+    }
+
+    private float GetZDerivative(int x, int z)
+    {
+        int rowLength = resolution + 1;
+        float back, forward, scale;
+        if (z > 0)
+        {
+            back = vertices[(z - 1) * rowLength + x].y;
+            if (z < resolution)
+            {
+                forward = vertices[(z + 1) * rowLength + x].y;
+                scale = 0.5f * resolution;
+            }
+            else
+            {
+                forward = vertices[z * rowLength + x].y;
+                scale = resolution;
+            }
+        }
+        else
+        {
+            back = vertices[z * rowLength + x].y;
+            forward = vertices[(z + 1) * rowLength + x].y;
+            scale = resolution;
+        }
+
+        return (forward - back) * scale;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (showNormals && vertices != null)
+        {
+            float scale = 1f / resolution;
+            Gizmos.color = Color.yellow;
+            for (int v = 0; v < vertices.Length; v++)
+            {
+                Gizmos.DrawRay(vertices[v], normals[v] * scale);
+            }
+        }
     }
 }
