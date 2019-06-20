@@ -50,7 +50,7 @@ public class SurfaceFlow : MonoBehaviour
 
             if (position.x < -0.5f || position.x > 0.5f || position.z < -0.5f || position.z > 0.5f)
             {
-                particles[i].lifetime = 0f;
+                particles[i].remainingLifetime = 0f;
             }
         }
     }
