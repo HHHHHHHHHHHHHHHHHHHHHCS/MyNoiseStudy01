@@ -79,6 +79,7 @@ public class SurfaceCreator : MonoBehaviour
             {
                 Vector3 point = Vector3.Lerp(point0, point1, x * stepSize);
                 NoiseSample sample = Noise.Sum(method, point, frequency, octaves, lacunarity, persistence);
+                sample = sample * 0.5f;
                 if (type != NoiseMethodType.Value)
                 {
                     sample = sample * 0.5f + 0.5f;

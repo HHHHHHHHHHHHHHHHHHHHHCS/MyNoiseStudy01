@@ -41,6 +41,7 @@ public class SurfaceFlow : MonoBehaviour
             Vector3 point = q * new Vector3(position.x, position.z) + surface.offset;
             NoiseSample sample = Noise.Sum(method, point,
                 surface.frequency, surface.octaves, surface.lacunarity, surface.persistence);
+            sample = sample * 0.5f;
             sample = surface.type == NoiseMethodType.Value ? (sample - 0.5f) : sample * 0.5f;
             sample *= amplitude;
             Vector3 curl = new Vector3(sample.derivative.y, 0f, -sample.derivative.x);

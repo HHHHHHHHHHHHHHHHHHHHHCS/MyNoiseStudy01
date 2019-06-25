@@ -5,7 +5,8 @@ public delegate NoiseSample NoiseMethod(Vector3 point, float frequency);
 public enum NoiseMethodType
 {
     Value,
-    Perlin
+    Perlin,
+    SimplexValue
 }
 
 public static class Noise
@@ -24,10 +25,19 @@ public static class Noise
         Perlin3D
     };
 
+    public static NoiseMethod[] simplexValueMethods =
+    {
+        SimplexValue1D,
+        SimplexValue2D,
+        SimplexValue3D
+    };
+
+
     public static NoiseMethod[][] methods =
     {
         valueMethods,
-        perlinMethods
+        perlinMethods,
+        simplexValueMethods
     };
 
     private static int[] hash =
@@ -177,7 +187,7 @@ public static class Noise
         sample.derivative.y = 0f;
         sample.derivative.z = 0f;
         sample.derivative *= frequency;
-        return sample * (1f / hashMask);
+        return sample * (2f / hashMask) - 1f;
     }
 
     public static NoiseSample Value2D(Vector3 point, float frequency)
@@ -215,7 +225,7 @@ public static class Noise
         sample.derivative.y = (c + d * tx) * dty;
         sample.derivative.z = 0f;
         sample.derivative *= frequency;
-        return sample * (1f / hashMask);
+        return sample * (2f / hashMask) - 1f;
     }
 
     public static NoiseSample Value3D(Vector3 point, float frequency)
@@ -271,7 +281,7 @@ public static class Noise
         sample.derivative.y = (c + e * tx + (g + h * tx) * tz) * dty;
         sample.derivative.z = (d + f * tx + (g + h * tx) * ty) * dtz;
         sample.derivative *= frequency;
-        return sample * (1f / hashMask);
+        return sample * (2f / hashMask) - 1f;
     }
 
     public static NoiseSample Perlin1D(Vector3 point, float frequency)
@@ -433,5 +443,40 @@ public static class Noise
         sample.derivative.z += (d + f * tx + (g + h * tx) * ty) * dtz;
         sample.derivative *= frequency;
         return sample;
+    }
+
+    public static NoiseSample SimplexValue1D(Vector3 point, float frequency)
+    {
+        point *= frequency;
+        int ix = Mathf.FloorToInt(point.x);
+        NoiseSample sample = SimplexValue1DPart(point, ix);
+        sample += SimplexValue1DPart(point, ix + 1);
+        return sample * 2f - 1f;
+    }
+
+    private static NoiseSample SimplexValue1DPart(Vector3 point, int ix)
+    {
+        float x = point.x - ix;
+        float f = 1f - x * x;
+        float f2 = f * f;
+        float f3 = f * f2;
+        float h = hash[ix & hashMask];
+        NoiseSample sample = new NoiseSample();
+        sample.value = h * f3;
+        return sample * (2f / hashMask) - 1f;
+    }
+
+    public static NoiseSample SimplexValue2D(Vector3 point, float frequency)
+    {
+        point *= frequency;
+        int ix = Mathf.FloorToInt(point.x);
+        return new NoiseSample();
+    }
+
+    public static NoiseSample SimplexValue3D(Vector3 point, float frequency)
+    {
+        point *= frequency;
+        int ix = Mathf.FloorToInt(point.x);
+        return new NoiseSample();
     }
 }

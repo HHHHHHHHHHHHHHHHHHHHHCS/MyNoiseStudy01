@@ -45,6 +45,7 @@ public class TextureCreator : MonoBehaviour
         Vector3 point11 = transform.TransformPoint(new Vector3(0.5f, 0.5f));
 
         NoiseMethod method = Noise.methods[(int) type][dimensions - 1];
+
         float stepSize = 1f / resolution;
         for (int y = 0; y < resolution; y++)
         {
@@ -54,11 +55,11 @@ public class TextureCreator : MonoBehaviour
             {
                 Vector3 point = Vector3.Lerp(point0, point1, (x + 0.5f) * stepSize);
                 float sample = Noise.Sum(method, point, frequency, octaves, lacunarity, persistence).value;
+                sample = sample * 0.5f + 0.5f;
                 if (type != NoiseMethodType.Value)
                 {
                     sample = sample * 0.5f + 0.5f;
                 }
-
                 texture.SetPixel(x, y, coloring.Evaluate(sample));
             }
         }
